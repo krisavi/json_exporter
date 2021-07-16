@@ -111,7 +111,7 @@ func CreateMetricsList(c config.File) ([]JsonMetric, error) {
 				metrics = append(metrics, jsonMetric)
 			}
 		default:
-			return nil, fmt.Errorf("Unknown metric type: '%s', for metric: '%s'", metric.Type, metric.Name)
+			return nil, fmt.Errorf("unknown metric type: '%s', for metric: '%s'", metric.Type, metric.Name)
 		}
 	}
 	return metrics, nil
@@ -119,7 +119,7 @@ func CreateMetricsList(c config.File) ([]JsonMetric, error) {
 
 func FetchJson(ctx context.Context, logger log.Logger, endpoint string, config config.Config, target interface{}) error {
 	httpClientConfig := config.HTTPClientConfig
-	client, err := pconfig.NewClientFromConfig(httpClientConfig, "fetch_json", true, false)
+	client, err := pconfig.NewClientFromConfig(httpClientConfig, "fetch_json", pconfig.WithHTTP2Disabled(), pconfig.WithKeepAlivesDisabled())
 	if err != nil {
 		level.Error(logger).Log("msg", "Error generating HTTP client", "err", err) //nolint:errcheck
 		return err
