@@ -19,11 +19,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/PaesslerAG/jsonpath"
 	"github.com/araddon/dateparse"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
-	"k8s.io/client-go/util/jsonpath"
 )
 
 type JsonMetricCollector struct {
@@ -162,29 +162,28 @@ func (mc JsonMetricCollector) Collect(ch chan<- prometheus.Metric) {
 func extractValue(logger log.Logger, data interface{}, path string, enableJSONOutput bool) (string, error) {
 	buf := new(bytes.Buffer)
 
-	j := jsonpath.New("jp")
-	if enableJSONOutput {
-		j.EnableJSONOutput(true)
-	}
+	//if err := json.Unmarshal(data, &jsonData); err != nil {
+	//	level.Error(logger).Log("msg", "Failed to unmarshal data to json", "err", err, "data", data) //nolint:errcheck
+	//	return "", err
+	//}
 
-	if err := json.Unmarshal(data, &jsonData); err != nil {
-		level.Error(logger).Log("msg", "Failed to unmarshal data to json", "err", err, "data", data) //nolint:errcheck
-		return "", err
-	}
-
-	if err := j.Parse(path); err != nil {
+	values, err := jsonpath.Get(path, data)
+	if err != nil {
 		level.Error(logger).Log("msg", "Failed to parse jsonpath", "err", err, "path", path, "data", data) //nolint:errcheck
 		return "", err
 	}
 
-	if err := j.Execute(buf, jsonData); err != nil {
-		level.Error(logger).Log("msg", "Failed to execute jsonpath", "err", err, "path", path, "data", data) //nolint:errcheck
-		return "", err
-	}
+	//if err := j.Execute(buf, jsonData); err != nil {
+	//	level.Error(logger).Log("msg", "Failed to execute jsonpath", "err", err, "path", path, "data", data) //nolint:errcheck
+	//	return "", err
+	//}
 
 	// Since we are finally going to extract only float64, unquote if necessary
-	if res, err := jsonpath.UnquoteExtend(buf.String()); err == nil {
-		return res, nil
+	for _, value := range values.([]interface{}) {
+		fmt.Println(value)
+		// if res, err := jsonpath.UnquoteExtend(buf.String()); err == nil {
+		// 	return res, nil
+		// }
 	}
 
 	return buf.String(), nil
