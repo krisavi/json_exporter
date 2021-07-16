@@ -167,17 +167,17 @@ func extractValue(logger log.Logger, data interface{}, path string, enableJSONOu
 		j.EnableJSONOutput(true)
 	}
 
-	if err := json.Unmarshal(data, &jsonData); err != nil {
-		level.Error(logger).Log("msg", "Failed to unmarshal data to json", "err", err, "data", data) //nolint:errcheck
-		return "", err
-	}
+	// if err := json.Unmarshal(data, &jsonData); err != nil {
+	// 	level.Error(logger).Log("msg", "Failed to unmarshal data to json", "err", err, "data", data) //nolint:errcheck
+	// 	return "", err
+	// }
 
 	if err := j.Parse(path); err != nil {
 		level.Error(logger).Log("msg", "Failed to parse jsonpath", "err", err, "path", path, "data", data) //nolint:errcheck
 		return "", err
 	}
 
-	if err := j.Execute(buf, jsonData); err != nil {
+	if err := j.Execute(buf, data); err != nil {
 		level.Error(logger).Log("msg", "Failed to execute jsonpath", "err", err, "path", path, "data", data) //nolint:errcheck
 		return "", err
 	}
