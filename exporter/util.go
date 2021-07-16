@@ -82,6 +82,7 @@ func CreateMetricsList(c config.File) ([]JsonMetric, error) {
 				KeyJsonPath:     metric.Path,
 				LabelsJsonPaths: variableLabelsValues,
 				TimestampPath:   metric.Timestamp,
+				TimestampFormat: metric.TimestampFormat,
 				Timezone:        metric.Timezone,
 			}
 			metrics = append(metrics, jsonMetric)
@@ -104,6 +105,7 @@ func CreateMetricsList(c config.File) ([]JsonMetric, error) {
 					ValueJsonPath:   valuePath,
 					LabelsJsonPaths: variableLabelsValues,
 					TimestampPath:   metric.Timestamp,
+					TimestampFormat: metric.TimestampFormat,
 					Timezone:        metric.Timezone,
 				}
 				metrics = append(metrics, jsonMetric)

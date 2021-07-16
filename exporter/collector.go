@@ -16,6 +16,8 @@ package exporter
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"time"
 
 	"github.com/araddon/dateparse"
 	"github.com/go-kit/kit/log"
@@ -37,6 +39,7 @@ type JsonMetric struct {
 	ValueJsonPath   string
 	LabelsJsonPaths []string
 	TimestampPath   string
+	TimestampFormat string
 	Timezone        string
 }
 
@@ -83,8 +86,11 @@ func (mc JsonMetricCollector) Collect(ch chan<- prometheus.Metric) {
 					var timestamp time.Time
 					timestamp, err = dateparse.ParseLocal(ts, dateparse.RetryAmbiguousDateWithSwap(true))
 					if err != nil {
-						level.Error(mc.Logger).Log("msg", "Failed to convert timestamp", "path", m.KeyJsonPath, "err", err, "metric", m.Desc) //nolint:errcheck
-						continue
+						timestamp, err = time.Parse(m.TimestampFormat, ts)
+						if err != nil {
+							level.Error(mc.Logger).Log("msg", "Failed to convert timestamp", "path", m.KeyJsonPath, "err", err, "metric", m.Desc) //nolint:errcheck
+							continue
+						}
 					}
 					ch <- prometheus.NewMetricWithTimestamp(timestamp, metric)
 				}
@@ -131,8 +137,11 @@ func (mc JsonMetricCollector) Collect(ch chan<- prometheus.Metric) {
 							var timestamp time.Time
 							timestamp, err = dateparse.ParseLocal(ts)
 							if err != nil {
-								level.Error(mc.Logger).Log("msg", "Failed to convert timestamp", "path", m.KeyJsonPath, "err", err, "metric", m.Desc) //nolint:errcheck
-								continue
+								timestamp, err = time.Parse(m.TimestampFormat, ts)
+								if err != nil {
+									level.Error(mc.Logger).Log("msg", "Failed to convert timestamp", "path", m.KeyJsonPath, "err", err, "metric", m.Desc) //nolint:errcheck
+									continue
+								}
 							}
 							ch <- prometheus.NewMetricWithTimestamp(timestamp, metric)
 						}

@@ -30,6 +30,7 @@ type Metric struct {
 	Name            string
 	Path            string
 	Timestamp       string
+	TimestampFormat string
 	Timezone        string
 	Labels          map[string]string
 	Type            MetricType
@@ -73,6 +74,9 @@ func LoadConfig(configPath string) (Config, error) {
 			}
 			if file.Metrics[i].Timezone == "" {
 				file.Metrics[i].Timezone = "UTC"
+			}
+			if file.Metrics[i].TimestampFormat == "" {
+				file.Metrics[i].TimestampFormat = "02.01.2006 15:04:05"
 			}
 		}
 
