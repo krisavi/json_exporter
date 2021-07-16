@@ -207,7 +207,11 @@ func TestHTTPHeaders(t *testing.T) {
 	req := httptest.NewRequest("GET", "http://example.com/foo"+"?target="+target.URL, nil)
 	recorder := httptest.NewRecorder()
 	c := config.Config{}
-	c.Headers = headers
+	for _, v := range c.Files {
+		if v.Path == req.URL.Path {
+			v.Headers = headers
+		}
+	}
 
 	probeHandler(recorder, req, log.NewNopLogger(), c)
 

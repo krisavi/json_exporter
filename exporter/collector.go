@@ -17,6 +17,7 @@ import (
 	"bytes"
 	"encoding/json"
 
+	"github.com/araddon/dateparse"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
@@ -27,6 +28,7 @@ type JsonMetricCollector struct {
 	JsonMetrics []JsonMetric
 	Data        interface{}
 	Logger      log.Logger
+	Path        string
 }
 
 type JsonMetric struct {

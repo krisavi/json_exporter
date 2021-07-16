@@ -62,7 +62,7 @@ func SanitizeValue(s string) (float64, error) {
 	return value, fmt.Errorf(resultErr)
 }
 
-func CreateMetricsList(c config.Config) ([]JsonMetric, error) {
+func CreateMetricsList(c config.File) ([]JsonMetric, error) {
 	var metrics []JsonMetric
 	for _, metric := range c.Metrics {
 		switch metric.Type {
@@ -128,9 +128,12 @@ func FetchJson(ctx context.Context, logger log.Logger, endpoint string, config c
 		level.Error(logger).Log("msg", "Failed to create request", "err", err) //nolint:errcheck
 		return err
 	}
-
-	for key, value := range config.Headers {
-		req.Header.Add(key, value)
+	for _, v := range config.Files {
+		if v.Path == req.URL.Path {
+			for key, value := range v.Headers {
+				req.Header.Add(key, value)
+			}
+		}
 	}
 	if req.Header.Get("Accept") == "" {
 		req.Header.Add("Accept", "application/json")

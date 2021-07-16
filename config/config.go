@@ -21,6 +21,11 @@ import (
 )
 
 // Metric contains values that define a metric
+type File struct {
+	Path    string            `yaml:"path"`
+	Metrics []Metric          `yaml:"metrics"`
+	Headers map[string]string `yaml:"headers,omitempty"`
+}
 type Metric struct {
 	Name            string
 	Path            string
@@ -41,8 +46,7 @@ const (
 
 // Config contains metrics and headers defining a configuration
 type Config struct {
-	Headers          map[string]string        `yaml:"headers,omitempty"`
-	Metrics          []Metric                 `yaml:"metrics"`
+	Files            []File                   `yaml:"files"`
 	HTTPClientConfig pconfig.HTTPClientConfig `yaml:"http_client_config,omitempty"`
 }
 
@@ -57,17 +61,21 @@ func LoadConfig(configPath string) (Config, error) {
 		return config, err
 	}
 
-	// Complete Defaults
-	for i := 0; i < len(config.Metrics); i++ {
-		if config.Metrics[i].Type == "" {
-			config.Metrics[i].Type = ValueScrape
+	for _, file := range config.Files {
+
+		// Complete Defaults
+		for i := 0; i < len(file.Metrics); i++ {
+			if file.Metrics[i].Type == "" {
+				file.Metrics[i].Type = ValueScrape
+			}
+			if file.Metrics[i].Help == "" {
+				file.Metrics[i].Help = file.Metrics[i].Name
+			}
+			if file.Metrics[i].Timezone == "" {
+				file.Metrics[i].Timezone = "UTC"
+			}
 		}
-		if config.Metrics[i].Help == "" {
-			config.Metrics[i].Help = config.Metrics[i].Name
-		}
-		if config.Metrics[i].Timezone == "" {
-			config.Metrics[i].Timezone = "UTC"
-		}
+
 	}
 
 	return config, nil

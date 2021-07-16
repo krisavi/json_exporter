@@ -17,6 +17,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/go-kit/kit/log"
@@ -88,24 +89,35 @@ func probeHandler(w http.ResponseWriter, r *http.Request, logger log.Logger, con
 
 	registry := prometheus.NewPedanticRegistry()
 
-	metrics, err := exporter.CreateMetricsList(config)
-	if err != nil {
-		level.Error(logger).Log("msg", "Failed to create metrics list from config", "err", err) //nolint:errcheck
-	}
+	for _, v := range config.Files {
+		target := r.URL.Query().Get("target")
+		if target == "" {
+			http.Error(w, "Target parameter is missing", http.StatusBadRequest)
+			return
+		}
+		t, _ := url.Parse(target)
+		if t.Path == v.Path {
+			metrics, err := exporter.CreateMetricsList(v)
+			if err != nil {
+				level.Error(logger).Log("msg", "Failed to create metrics list from config", "err", err) //nolint:errcheck
+			}
 
-	jsonMetricCollector := exporter.JsonMetricCollector{JsonMetrics: metrics}
-	jsonMetricCollector.Logger = logger
+			jsonMetricCollector := exporter.JsonMetricCollector{JsonMetrics: metrics, Path: v.Path}
+			jsonMetricCollector.Logger = logger
 
 			jsonData := interface{}(nil)
 			err = exporter.FetchJson(ctx, logger, target, config, &jsonData)
-	if err != nil {
-		http.Error(w, "Failed to fetch JSON response. TARGET: "+target+", ERROR: "+err.Error(), http.StatusServiceUnavailable)
-		return
-	}
+			if err != nil {
+				http.Error(w, "Failed to fetch JSON response. TARGET: "+target+", ERROR: "+err.Error(), http.StatusServiceUnavailable)
+				return
+			}
 
 			jsonMetricCollector.Data = jsonData
 
-	registry.MustRegister(jsonMetricCollector)
+			registry.MustRegister(jsonMetricCollector)
+		}
+	}
+
 	h := promhttp.HandlerFor(registry, promhttp.HandlerOpts{})
 	h.ServeHTTP(w, r)
 
