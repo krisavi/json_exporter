@@ -25,7 +25,7 @@ import (
 
 type JsonMetricCollector struct {
 	JsonMetrics []JsonMetric
-	Data        []byte
+	Data        interface{}
 	Logger      log.Logger
 }
 
@@ -105,8 +105,7 @@ func (mc JsonMetricCollector) Collect(ch chan<- prometheus.Metric) {
 }
 
 // Returns the last matching value at the given json path
-func extractValue(logger log.Logger, data []byte, path string, enableJSONOutput bool) (string, error) {
-	var jsonData interface{}
+func extractValue(logger log.Logger, data interface{}, path string, enableJSONOutput bool) (string, error) {
 	buf := new(bytes.Buffer)
 
 	j := jsonpath.New("jp")
@@ -138,7 +137,7 @@ func extractValue(logger log.Logger, data []byte, path string, enableJSONOutput 
 }
 
 // Returns the list of labels created from the list of provided json paths
-func extractLabels(logger log.Logger, data []byte, paths []string) []string {
+func extractLabels(logger log.Logger, data interface{}, paths []string) []string {
 	labels := make([]string, len(paths))
 	for i, path := range paths {
 		if result, err := extractValue(logger, data, path, false); err == nil {

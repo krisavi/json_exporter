@@ -96,19 +96,14 @@ func probeHandler(w http.ResponseWriter, r *http.Request, logger log.Logger, con
 	jsonMetricCollector := exporter.JsonMetricCollector{JsonMetrics: metrics}
 	jsonMetricCollector.Logger = logger
 
-	target := r.URL.Query().Get("target")
-	if target == "" {
-		http.Error(w, "Target parameter is missing", http.StatusBadRequest)
-		return
-	}
-
-	data, err := exporter.FetchJson(ctx, logger, target, config)
+			jsonData := interface{}(nil)
+			err = exporter.FetchJson(ctx, logger, target, config, &jsonData)
 	if err != nil {
 		http.Error(w, "Failed to fetch JSON response. TARGET: "+target+", ERROR: "+err.Error(), http.StatusServiceUnavailable)
 		return
 	}
 
-	jsonMetricCollector.Data = data
+			jsonMetricCollector.Data = jsonData
 
 	registry.MustRegister(jsonMetricCollector)
 	h := promhttp.HandlerFor(registry, promhttp.HandlerOpts{})

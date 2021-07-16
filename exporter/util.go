@@ -15,6 +15,7 @@ package exporter
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -110,18 +111,18 @@ func CreateMetricsList(c config.Config) ([]JsonMetric, error) {
 	return metrics, nil
 }
 
-func FetchJson(ctx context.Context, logger log.Logger, endpoint string, config config.Config) ([]byte, error) {
+func FetchJson(ctx context.Context, logger log.Logger, endpoint string, config config.Config, target interface{}) error {
 	httpClientConfig := config.HTTPClientConfig
 	client, err := pconfig.NewClientFromConfig(httpClientConfig, "fetch_json", true, false)
 	if err != nil {
 		level.Error(logger).Log("msg", "Error generating HTTP client", "err", err) //nolint:errcheck
-		return nil, err
+		return err
 	}
 	req, err := http.NewRequest("GET", endpoint, nil)
 	req = req.WithContext(ctx)
 	if err != nil {
 		level.Error(logger).Log("msg", "Failed to create request", "err", err) //nolint:errcheck
-		return nil, err
+		return err
 	}
 
 	for key, value := range config.Headers {
@@ -132,7 +133,7 @@ func FetchJson(ctx context.Context, logger log.Logger, endpoint string, config c
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	defer func() {
@@ -143,13 +144,13 @@ func FetchJson(ctx context.Context, logger log.Logger, endpoint string, config c
 	}()
 
 	if resp.StatusCode/100 != 2 {
-		return nil, errors.New(resp.Status)
+		return errors.New(resp.Status)
 	}
 
-	data, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	return data, nil
+	//body, err := ioutil.ReadAll(resp.Body)
+	//if err != nil {
+	//	return err
+	//}
+	return json.NewDecoder(resp.Body).Decode(&target)
+	//return json.Unmarshal(body, &target)
 }
